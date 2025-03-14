@@ -24,11 +24,18 @@ public:
 public slots:
     void sendRequest(QString urlString, QString data);
 
+private slots:
+    void handleResponse();
+
 signals:
+    void requestSended();
     void sendingFailed(QString reason);
 
-private:
+    void responseHandled(QString data, int status);
+    void responseErrorOccur(QString reason);
 
+private:
+    QNetworkAccessManager * const m_networkManager;
 };
 
 #endif // BACKEND_H

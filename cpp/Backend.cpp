@@ -2,6 +2,7 @@
 
 Backend::Backend(QObject *parent)
     : QObject{parent}
+    , m_networkManager{new QNetworkAccessManager(this)}
 {}
 
 bool Backend::isUrlValid(const QString &urlString) const
@@ -12,26 +13,62 @@ bool Backend::isUrlValid(const QString &urlString) const
 
 void Backend::sendRequest(QString urlString, QString data)
 {
-    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    qDebug() << "sending request";
 
     QUrl url(urlString);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QJsonParseError jsonError;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data.toUtf8(), &jsonError);
+    QJsonDocument jsonDoc;
+    if(!data.isEmpty())
+    {
+        QJsonParseError jsonError;
+        QJsonDocument::fromJson(data.toUtf8(), &jsonError);
+        if(jsonError.error != QJsonParseError::NoError) {
+            emit this->sendingFailed("Request is not a valid JSON!");
+            return;
+        }
+        // if(!jsonDoc.isObject()){
+        //     emit this->sendingFailed("Request is not a valid JSON (no object)!");
+        //     return;
+        // }
+    }
 
-    if(jsonError.error != QJsonParseError::NoError) {
-        emit this->sendingFailed("Request is not a valid JSON!");
+    QByteArray jsonData = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
+
+    QNetworkReply *reply = m_networkManager->get(request, jsonData);
+    QObject::connect(reply, &QNetworkReply::finished, this, &Backend::handleResponse);
+
+    emit this->requestSended();
+}
+
+void Backend::handleResponse()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    /// sender is useful :3
+
+    if(!reply)
+    {
+        emit this->responseErrorOccur("Response signal sender is a null!");
         return;
     }
 
-    if(!jsonDoc.isObject()){
-        emit this->sendingFailed("Request is not a valid JSON (no object)!");
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
+    QByteArray responseData = reply->readAll();
+
+    QJsonDocument responseJson = QJsonDocument::fromJson(responseData);
+    if(responseJson.isNull())
+        emit this->responseHandled(responseData, statusCode);
+    else
+        emit this->responseHandled(responseJson.toJson(), statusCode);
+
+    if(reply->error() != QNetworkReply::NoError)
+    {
+        emit this->responseErrorOccur(reply->errorString());
+        qDebug() << reply->errorString();
         return;
     }
 
-    QNetworkReply *reply = manager->post(request, jsonDoc.toJson());
-
-    // QEventLoop
+    reply->deleteLater();
 }
