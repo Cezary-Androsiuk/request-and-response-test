@@ -16,6 +16,7 @@
 class Backend : public QObject
 {
     Q_OBJECT
+
 public:
     explicit Backend(QObject *parent = nullptr);
 
@@ -32,14 +33,23 @@ signals:
     void requestSended();
     void sendingFailed(QString reason);
 
-    void responseHandled(QString data, int status);
-    void responseErrorOccur(QString data, int status, QString reason);
+    void responseHandled();
+    void responseErrorOccur(QString reason);
 
     void abortedRequest();
+
+public:
+    Q_INVOKABLE bool getLastDataIsHtml() const;
+    Q_INVOKABLE int getLastStatusCode() const;
+    Q_INVOKABLE QString getLastData() const;
 
 private:
     QNetworkAccessManager * const m_networkManager;
     QNetworkReply *m_reply;
+
+    bool m_lastDataIsHtml;
+    int m_lastStatusCode;
+    QString m_lastData;
 };
 
 #endif // BACKEND_H

@@ -3,6 +3,8 @@
 Backend::Backend(QObject *parent)
     : QObject{parent}
     , m_networkManager{new QNetworkAccessManager(this)}
+    , m_lastDataIsHtml{false}
+    , m_lastStatusCode{-1}
 {}
 
 bool Backend::isUrlValid(const QString &urlString) const
@@ -13,6 +15,8 @@ bool Backend::isUrlValid(const QString &urlString) const
 
 void Backend::sendRequest(QString urlString, QString data, QString method)
 {
+    m_lastDataIsHtml = false;
+
     qDebug() << "sending request";
 
     QUrl url(urlString);
@@ -41,6 +45,7 @@ void Backend::sendRequest(QString urlString, QString data, QString method)
 #else
     requestData = data.toLatin1();
 #endif
+
     if(method == "GET")
         m_reply = m_networkManager->get(request, requestData);
     else if(method == "POST")
@@ -74,36 +79,58 @@ void Backend::abortRequest()
 
 void Backend::handleResponse()
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    /// sender is useful :3
-
-    if(!reply)
+    if(!m_reply)
     {
-        emit this->responseErrorOccur("", -1, "Response signal sender is a null!");
+        m_lastData.clear();
+        m_lastStatusCode = -1;
+        emit this->responseErrorOccur("Reply does not exist!");
         return;
     }
 
-    if(reply->error() == QNetworkReply::OperationCanceledError)
+    if(m_reply->error() == QNetworkReply::OperationCanceledError)
     {
         emit this->abortedRequest();
         return;
     }
 
-    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    m_lastStatusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-    QByteArray responseData = reply->readAll();
+    QByteArray responseData = m_reply->readAll();
 
     QJsonDocument responseJson = QJsonDocument::fromJson(responseData);
     QString data = responseJson.isNull() ? responseData : responseJson.toJson();
 
-    if(reply->error() != QNetworkReply::NoError)
+    if(!data.isEmpty())
     {
-        emit this->responseErrorOccur(data, statusCode, reply->errorString());
-        reply->deleteLater();
+        if(data[0] == '<')
+            m_lastDataIsHtml = true;
+    }
+
+    m_lastData = data;
+
+    if(m_reply->error() != QNetworkReply::NoError)
+    {
+        emit this->responseErrorOccur(m_reply->errorString());
+        m_reply->deleteLater();
         return;
     }
 
-    emit this->responseHandled(data, statusCode);
+    emit this->responseHandled();
 
-    reply->deleteLater();
+    m_reply->deleteLater();
+}
+
+bool Backend::getLastDataIsHtml() const
+{
+    return m_lastDataIsHtml;
+}
+
+int Backend::getLastStatusCode() const
+{
+    return m_lastStatusCode;
+}
+
+QString Backend::getLastData() const
+{
+    return m_lastData;
 }

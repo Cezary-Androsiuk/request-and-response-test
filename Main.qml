@@ -36,8 +36,12 @@ ApplicationWindow {
     function time(){
         var now = new Date();
         return now.toLocaleDateString("YYYY-MM-DD") + " " + now.toLocaleTimeString() + " - "
-
     }
+
+    function validStatus(status){
+        return status < 0 ? "---" : status
+    }
+
 
     Connections{
         target: Backend
@@ -54,18 +58,27 @@ ApplicationWindow {
             stopWaiting()
         }
 
-        function onResponseHandled(data, status){
+        function onResponseHandled(){
             let message = time() + "OK\n"
             infoTextArea.text = message + infoTextArea.text;
-            replyStatusLabel.text = replyStatusLabel.prefixText + status;
 
-            responseTextArea.text = data;
+            let status = Backend.getLastStatusCode();
+            replyStatusLabel.text = replyStatusLabel.prefixText + validStatus(status);
+
+            responseTextArea.text = Backend.getLastData();
+
             stopWaiting()
         }
 
-        function onResponseErrorOccur(data, status, reason){
+        function onResponseErrorOccur(reason){
             let message = time() + "Handling failed: " + reason + "\n"
             infoTextArea.text = message + infoTextArea.text;
+
+            let status = Backend.getLastStatusCode();
+            replyStatusLabel.text = replyStatusLabel.prefixText + validStatus(status);
+
+            responseTextArea.text = Backend.getLastData();
+
             stopWaiting()
         }
 
