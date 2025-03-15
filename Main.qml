@@ -1,5 +1,8 @@
 import QtQuick
 import QtQuick.Controls.Material
+// WEB ENGINE STUFF
+// import QtWebView
+// import QtWebEngine
 
 ApplicationWindow {
     height: Screen.height * 0.6
@@ -16,21 +19,29 @@ ApplicationWindow {
     Material.accent: Material.Pink // Purple
 
     function startWaiting(){
-        responseTextArea.text = "";
+        replyDataLoader.sourceComponent = waitingForReply;
 
-        responseScrollView.visible = false;
-        waitingForResponseIndicator.visible = true;
-        waitingForResponseIndicator.running = true;
         cancelWaitingButton.enabled = true;
         sendRequestButton.enabled = false;
     }
 
     function stopWaiting(){
+        // WEB ENGINE STUFF
+        // var compiler = Backend.getCompiler();
+        // if(compiler === "MSVC")
+        // {
+        //     if(Backend.getLastDataIsHtml())
+        //         replyDataLoader.sourceComponent = htmlReply
+        //     else
+        //         replyDataLoader.sourceComponent = jsonReply
+        // }
+        // else
+        // {
+            replyDataLoader.sourceComponent = jsonReply
+        // }
+
         cancelWaitingButton.enabled = false;
         sendRequestButton.enabled = true;
-        responseScrollView.visible = true;
-        waitingForResponseIndicator.running = false;
-        waitingForResponseIndicator.visible = false;
     }
 
     function time(){
@@ -42,19 +53,20 @@ ApplicationWindow {
         return status < 0 ? "---" : status
     }
 
-
     Connections{
         target: Backend
 
         function onRequestSended(){
             // let message = "Sended!\n"
             // infoTextArea.text = message + infoTextArea.text;
+
             startWaiting();
         }
 
         function onSendingFailed(reason){
             let message = time() + "Sending failed: " +  reason + "\n"
             infoTextArea.text = message + infoTextArea.text;
+
             stopWaiting()
         }
 
@@ -64,8 +76,6 @@ ApplicationWindow {
 
             let status = Backend.getLastStatusCode();
             replyStatusLabel.text = replyStatusLabel.prefixText + validStatus(status);
-
-            responseTextArea.text = Backend.getLastData();
 
             stopWaiting()
         }
@@ -77,14 +87,13 @@ ApplicationWindow {
             let status = Backend.getLastStatusCode();
             replyStatusLabel.text = replyStatusLabel.prefixText + validStatus(status);
 
-            responseTextArea.text = Backend.getLastData();
-
             stopWaiting()
         }
 
         function onAbortedRequest(){
             let message = time() + "Aborted\n"
             infoTextArea.text = message + infoTextArea.text;
+
             stopWaiting()
         }
     }
@@ -196,21 +205,25 @@ ApplicationWindow {
                     }
                     height: column.textAreaHeight
 
-                    ScrollView{
-                        id: responseScrollView
+                    Loader{
+                        id: replyDataLoader
                         anchors.fill: parent
-                        TextArea{
-                            id: responseTextArea
-                            placeholderText: "Response Data"
-                            // readOnly: true
-                            font.family: "Courier New"
-                        }
-                    }
+                        onLoaded: {
+                            var data = Backend.getLastData();
 
-                    BusyIndicator{
-                        id: waitingForResponseIndicator
-                        anchors.centerIn: parent
-                        running: false
+                            if(sourceComponent == waitingForReply)
+                                return;
+
+                            // WEB ENGINE STUFF
+                            // if(sourceComponent == htmlReply)
+                            // {
+                            //     item.webViewHandler.loadHtml(data, "file:///")
+                            // }
+                            // else
+                            // {
+                                item.textAreaHandler.text = data;
+                            // }
+                        }
                     }
 
                     Label{
@@ -226,6 +239,55 @@ ApplicationWindow {
                         text: prefixText + "---"
                         font.pixelSize: 14
                         opacity: 0.8
+                    }
+
+
+                    Component{
+                        id: jsonReply
+                        Item{
+                            id: jsonReplyContent
+                            property alias textAreaHandler: responseTextArea
+
+                            ScrollView{
+                                id: responseScrollView
+                                anchors.fill: parent
+                                TextArea{
+                                    id: responseTextArea
+                                    placeholderText: "Response Data"
+                                    // readOnly: true
+                                    font.family: "Courier New"
+                                }
+                            }
+
+                        }
+                    }
+
+                    // WEB ENGINE STUFF
+                    // Component{
+                    //     id: htmlReply
+                    //     Item{
+                    //         id: htmlReplyContent
+                    //         property alias webViewHandler: webView
+
+                    //         ScrollView{
+                    //             anchors.fill: parent
+                    //             // WebEngine{
+                    //             WebView {
+                    //                 id: webView
+                    //             }
+
+                    //         }
+                    //     }
+                    // }
+
+                    Component{
+                        id: waitingForReply
+                        Item{
+                            BusyIndicator{
+                                anchors.centerIn: parent
+                                running: true
+                            }
+                        }
                     }
                 }
 

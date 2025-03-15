@@ -42,6 +42,7 @@ public:
     Q_INVOKABLE bool getLastDataIsHtml() const;
     Q_INVOKABLE int getLastStatusCode() const;
     Q_INVOKABLE QString getLastData() const;
+    Q_INVOKABLE QString getCompiler() const;
 
 private:
     QNetworkAccessManager * const m_networkManager;

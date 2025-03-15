@@ -4,6 +4,14 @@ project(RequestAndResponseTest VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+# WEB ENGINE STUFF
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+#     find_package(Qt6 REQUIRED COMPONENTS Quick WebEngineQuick WebViewQuick)
+# else() # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#     find_package(Qt6 REQUIRED COMPONENTS Quick WebViewQuick)
+# endif()
+
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 
 qt_standard_project_setup(REQUIRES 6.5)
@@ -32,9 +40,21 @@ set_target_properties(appRequestAndResponseTest PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+# WEB ENGINE STUFF
+# if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+#     target_link_libraries(appRequestAndResponseTest
+#         PRIVATE Qt6::Quick Qt6::WebEngineQuick Qt6::WebViewQuick
+#     )
+# else() # if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+#     target_link_libraries(appRequestAndResponseTest
+#         PRIVATE Qt6::Quick Qt6::WebViewQuick
+#     )
+# endif()
+
 target_link_libraries(appRequestAndResponseTest
     PRIVATE Qt6::Quick
 )
+
 
 include(GNUInstallDirs)
 install(TARGETS appRequestAndResponseTest

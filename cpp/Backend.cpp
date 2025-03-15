@@ -134,3 +134,12 @@ QString Backend::getLastData() const
 {
     return m_lastData;
 }
+
+QString Backend::getCompiler() const
+{
+#ifdef __GNUC__
+    return "MinGW";
+#elif defined(_MSC_VER)
+    return "MSVC";
+#endif
+}
