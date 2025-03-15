@@ -189,7 +189,7 @@ ApplicationWindow {
                         TextArea{
                             id: responseTextArea
                             placeholderText: "Response Data"
-                            readOnly: true
+                            // readOnly: true
                             font.family: "Courier New"
                         }
                     }
@@ -228,7 +228,7 @@ ApplicationWindow {
                         TextArea{
                             id: infoTextArea
                             placeholderText: "Info output"
-                            readOnly: true
+                            // readOnly: true
                             font.family: "Courier New"
                         }
                     }
