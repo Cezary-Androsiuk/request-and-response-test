@@ -33,6 +33,12 @@ ApplicationWindow {
         waitingForResponseIndicator.visible = false;
     }
 
+    function time(){
+        var now = new Date();
+        return now.toLocaleDateString("YYYY-MM-DD") + " " + now.toLocaleTimeString() + " - "
+
+    }
+
     Connections{
         target: Backend
 
@@ -43,13 +49,13 @@ ApplicationWindow {
         }
 
         function onSendingFailed(reason){
-            let message = "Sending failed: " +  reason + "\n"
+            let message = time() + "Sending failed: " +  reason + "\n"
             infoTextArea.text = message + infoTextArea.text;
             stopWaiting()
         }
 
         function onResponseHandled(data, status){
-            let message = "OK\n"
+            let message = time() + "OK\n"
             infoTextArea.text = message + infoTextArea.text;
             replyStatusLabel.text = replyStatusLabel.prefixText + status;
 
@@ -57,8 +63,8 @@ ApplicationWindow {
             stopWaiting()
         }
 
-        function onResponseErrorOccur(reason){
-            let message = "Handling failed: " + reason + "\n"
+        function onResponseErrorOccur(data, status, reason){
+            let message = time() + "Handling failed: " + reason + "\n"
             infoTextArea.text = message + infoTextArea.text;
             stopWaiting()
         }
@@ -107,7 +113,8 @@ ApplicationWindow {
 
                         placeholderText: "Url to send request to"
                         // text: "https://httpbin.org/delay/1"
-                        text: "https://reqres.in/api/users"
+                        // text: "https://reqres.in/api/users"
+                        text: "http://192.168.0.72:5000/api"
                     }
 
                     ComboBox{

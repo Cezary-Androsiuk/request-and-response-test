@@ -32,7 +32,7 @@ signals:
     void sendingFailed(QString reason);
 
     void responseHandled(QString data, int status);
-    void responseErrorOccur(QString reason);
+    void responseErrorOccur(QString data, int status, QString reason);
 
 private:
     QNetworkAccessManager * const m_networkManager;

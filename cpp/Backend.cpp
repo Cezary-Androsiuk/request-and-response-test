@@ -27,7 +27,7 @@ void Backend::sendRequest(QString urlString, QString data, QString method)
     if(!data.isEmpty())
     {
         QJsonParseError jsonError;
-        QJsonDocument::fromJson(data.toUtf8(), &jsonError);
+        jsonDoc = QJsonDocument::fromJson(data.toUtf8(), &jsonError);
         if(jsonError.error != QJsonParseError::NoError) {
             emit this->sendingFailed("Request is not a valid JSON!");
             return;
@@ -41,8 +41,6 @@ void Backend::sendRequest(QString urlString, QString data, QString method)
 #else
     requestData = data.toLatin1();
 #endif
-
-
     QNetworkReply *reply;
 
     if(method == "GET")
@@ -50,7 +48,7 @@ void Backend::sendRequest(QString urlString, QString data, QString method)
     else if(method == "POST")
         reply = m_networkManager->post(request, requestData);
     else if(method == "PUT")
-        reply = m_networkManager->post(request, requestData);
+        reply = m_networkManager->put(request, requestData);
     else if(method == "PATCH")
         reply = m_networkManager->sendCustomRequest(request, "PATCH", requestData);
 
@@ -77,7 +75,7 @@ void Backend::handleResponse()
 
     if(!reply)
     {
-        emit this->responseErrorOccur("Response signal sender is a null!");
+        emit this->responseErrorOccur("", -1, "Response signal sender is a null!");
         return;
     }
 
@@ -86,17 +84,16 @@ void Backend::handleResponse()
     QByteArray responseData = reply->readAll();
 
     QJsonDocument responseJson = QJsonDocument::fromJson(responseData);
-    if(responseJson.isNull())
-        emit this->responseHandled(responseData, statusCode);
-    else
-        emit this->responseHandled(responseJson.toJson(), statusCode);
+    QString data = responseJson.isNull() ? responseData : responseJson.toJson();
 
     if(reply->error() != QNetworkReply::NoError)
     {
-        emit this->responseErrorOccur(reply->errorString());
-        qDebug() << reply->errorString();
+        emit this->responseErrorOccur(data, statusCode, reply->errorString());
+        reply->deleteLater();
         return;
     }
+
+    emit this->responseHandled(data, statusCode);
 
     reply->deleteLater();
 }
