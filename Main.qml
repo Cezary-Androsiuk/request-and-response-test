@@ -37,16 +37,20 @@ ApplicationWindow {
         target: Backend
 
         function onRequestSended(){
+            // let message = "Sended!\n"
+            // infoTextArea.text = message + infoTextArea.text;
             startWaiting();
         }
 
         function onSendingFailed(reason){
             let message = "Sending failed: " +  reason + "\n"
-            errorInfoTextArea.text = message + errorInfoTextArea.text;
+            infoTextArea.text = message + infoTextArea.text;
             stopWaiting()
         }
 
         function onResponseHandled(data, status){
+            let message = "OK\n"
+            infoTextArea.text = message + infoTextArea.text;
             replyStatusLabel.text = replyStatusLabel.prefixText + status;
 
             responseTextArea.text = data;
@@ -55,7 +59,7 @@ ApplicationWindow {
 
         function onResponseErrorOccur(reason){
             let message = "Handling failed: " + reason + "\n"
-            errorInfoTextArea.text = message + errorInfoTextArea.text;
+            infoTextArea.text = message + infoTextArea.text;
             stopWaiting()
         }
     }
@@ -84,18 +88,56 @@ ApplicationWindow {
                 readonly property double textAreaHeight:
                     (column.height - connectionUrl.height - replyStatusLabel.height - column.spacing*3) /3
 
-                TextField{
-                    id: connectionUrl
+                Item{
                     anchors{
                         left: parent.left
                         right: parent.right
                     }
+                    height: connectionUrl.height
 
-                    placeholderText: "Url to send request to"
-                    // text: "https://httpbin.org/delay/1"
-                    // text: "https://nghttp2.org/httpbin/delay/1"
-                    text: "https://reqres.in/api/users"
+                    TextField{
+                        id: connectionUrl
+                        anchors{
+                            left: parent.left
+                            top: parent.top
+                            bottom: parent.bottom
+                        }
+                        width: parent.width * 0.85
+                        font.family: "Courier New"
+
+                        placeholderText: "Url to send request to"
+                        // text: "https://httpbin.org/delay/1"
+                        text: "https://reqres.in/api/users"
+                    }
+
+                    ComboBox{
+                        id: requestMethodComboBox
+                        anchors{
+                            left: connectionUrl.right
+                            top: parent.top
+                            right: parent.right
+                            bottom: parent.bottom
+                        }
+
+                        editable: false
+                        model: ListModel{
+                            id: model
+                            ListElement { text: "GET" }
+                            ListElement { text: "POST" }
+                            ListElement { text: "PUT" }
+                            ListElement { text: "PATCH" }
+
+                            ListElement { text: "DELETE" }
+                            ListElement { text: "HEAD" }
+                            ListElement { text: "OPTIONS" }
+                            ListElement { text: "TRACE" }
+                            ListElement { text: "CONNECT" }
+                        }
+                        currentIndex: 1
+                    }
                 }
+
+
 
                 Item{
                     anchors{
@@ -108,7 +150,12 @@ ApplicationWindow {
                         TextArea{
                             id: requestTextArea
                             placeholderText: "Request Data"
-                            text: "{\n  \"name\": \"morpheus\",\n  \"job\": \"leader\"\n}";
+                            text: "{\n"
+                                + "    \"name\": \"morpheus\",\n"
+                                + "    \"job\": \"leader\",\n"
+                                + "    \"alternative URL\": \"https://httpbin.org/delay/1\"\n"
+                                + "}"
+                            font.family: "Courier New"
                         }
                     }
                 }
@@ -128,6 +175,7 @@ ApplicationWindow {
                             id: responseTextArea
                             placeholderText: "Response Data"
                             readOnly: true
+                            font.family: "Courier New"
                         }
                     }
 
@@ -140,7 +188,7 @@ ApplicationWindow {
                     Label{
                         id: replyStatusLabel
                         anchors{
-                            left: parent.left
+                            horizontalCenter: parent.horizontalCenter
                             top: parent.bottom
                             leftMargin: 2
                             topMargin: 5
@@ -149,7 +197,7 @@ ApplicationWindow {
                         readonly property string prefixText: "Response status: "
                         text: prefixText + "---"
                         font.pixelSize: 14
-                        opacity: 0.4
+                        opacity: 0.8
                     }
                 }
 
@@ -163,9 +211,10 @@ ApplicationWindow {
                     ScrollView{
                         anchors.fill: parent
                         TextArea{
-                            id: errorInfoTextArea
-                            placeholderText: "Error output"
+                            id: infoTextArea
+                            placeholderText: "Info output"
                             readOnly: true
+                            font.family: "Courier New"
                         }
                     }
                 }
@@ -193,7 +242,10 @@ ApplicationWindow {
                 text: "Send request"
 
                 onClicked: {
-                    Backend.sendRequest(connectionUrl.text, requestTextArea.text);
+                    Backend.sendRequest(
+                                connectionUrl.text,
+                                requestTextArea.text,
+                                requestMethodComboBox.currentValue);
                 }
             }
 

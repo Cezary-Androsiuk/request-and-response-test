@@ -11,7 +11,7 @@ bool Backend::isUrlValid(const QString &urlString) const
     return url.isValid() && !url.scheme().isEmpty() && !url.host().isEmpty();
 }
 
-void Backend::sendRequest(QString urlString, QString data)
+void Backend::sendRequest(QString urlString, QString data, QString method)
 {
     qDebug() << "sending request";
 
@@ -19,6 +19,10 @@ void Backend::sendRequest(QString urlString, QString data)
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
+    QByteArray requestData;
+
+#define USE_JSON true
+#if USE_JSON
     QJsonDocument jsonDoc;
     if(!data.isEmpty())
     {
@@ -33,10 +37,34 @@ void Backend::sendRequest(QString urlString, QString data)
         //     return;
         // }
     }
+    requestData = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
+#else
+    requestData = data.toLatin1();
+#endif
 
-    QByteArray jsonData = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
 
-    QNetworkReply *reply = m_networkManager->get(request, jsonData);
+    QNetworkReply *reply;
+
+    if(method == "GET")
+        reply = m_networkManager->get(request, requestData);
+    else if(method == "POST")
+        reply = m_networkManager->post(request, requestData);
+    else if(method == "PUT")
+        reply = m_networkManager->post(request, requestData);
+    else if(method == "PATCH")
+        reply = m_networkManager->sendCustomRequest(request, "PATCH", requestData);
+
+    else if(method == "DELETE")
+        reply = m_networkManager->sendCustomRequest(request, "DELETE", requestData);
+    else if(method == "HEAD")
+        reply = m_networkManager->sendCustomRequest(request, "HEAD", requestData);
+    else if(method == "OPTIONS")
+        reply = m_networkManager->sendCustomRequest(request, "OPTIONS", requestData);
+    else if(method == "TRACE")
+        reply = m_networkManager->sendCustomRequest(request, "TRACE", requestData);
+    else if(method == "CONNECT")
+        reply = m_networkManager->sendCustomRequest(request, "CONNECT", requestData);
+
     QObject::connect(reply, &QNetworkReply::finished, this, &Backend::handleResponse);
 
     emit this->requestSended();

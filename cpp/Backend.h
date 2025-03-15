@@ -22,7 +22,7 @@ public:
     bool isUrlValid(const QString &urlString) const;
 
 public slots:
-    void sendRequest(QString urlString, QString data);
+    void sendRequest(QString urlString, QString data, QString method);
 
 private slots:
     void handleResponse();
