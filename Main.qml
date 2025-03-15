@@ -68,6 +68,12 @@ ApplicationWindow {
             infoTextArea.text = message + infoTextArea.text;
             stopWaiting()
         }
+
+        function onAbortedRequest(){
+            let message = time() + "Aborted\n"
+            infoTextArea.text = message + infoTextArea.text;
+            stopWaiting()
+        }
     }
 
     Item{
@@ -113,8 +119,8 @@ ApplicationWindow {
 
                         placeholderText: "Url to send request to"
                         // text: "https://httpbin.org/delay/1"
-                        // text: "https://reqres.in/api/users"
-                        text: "http://192.168.0.72:5000/api"
+                        text: "https://reqres.in/api/users"
+                        // text: "http://192.168.0.72:5000/api"
                     }
 
                     ComboBox{
@@ -160,7 +166,9 @@ ApplicationWindow {
                             text: "{\n"
                                 + "    \"name\": \"morpheus\",\n"
                                 + "    \"job\": \"leader\",\n"
-                                + "    \"alternative URL\": \"https://httpbin.org/delay/1\"\n"
+                                + "    \"useful url 1\": \"https://httpbin.org/delay/1\",\n"
+                                + "    \"useful url 2\": \"https://reqres.in/api/users\",\n"
+                                + "    \"useful url 3\": \"http://192.168.0.72:5000/api\"\n"
                                 + "}"
                             font.family: "Courier New"
                         }
@@ -268,7 +276,7 @@ ApplicationWindow {
                 enabled: false;
 
                 onClicked: {
-
+                    Backend.abortRequest();
                 }
             }
         }

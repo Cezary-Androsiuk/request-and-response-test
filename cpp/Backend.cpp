@@ -41,31 +41,35 @@ void Backend::sendRequest(QString urlString, QString data, QString method)
 #else
     requestData = data.toLatin1();
 #endif
-    QNetworkReply *reply;
-
     if(method == "GET")
-        reply = m_networkManager->get(request, requestData);
+        m_reply = m_networkManager->get(request, requestData);
     else if(method == "POST")
-        reply = m_networkManager->post(request, requestData);
+        m_reply = m_networkManager->post(request, requestData);
     else if(method == "PUT")
-        reply = m_networkManager->put(request, requestData);
+        m_reply = m_networkManager->put(request, requestData);
     else if(method == "PATCH")
-        reply = m_networkManager->sendCustomRequest(request, "PATCH", requestData);
+        m_reply = m_networkManager->sendCustomRequest(request, "PATCH", requestData);
 
     else if(method == "DELETE")
-        reply = m_networkManager->sendCustomRequest(request, "DELETE", requestData);
+        m_reply = m_networkManager->sendCustomRequest(request, "DELETE", requestData);
     else if(method == "HEAD")
-        reply = m_networkManager->sendCustomRequest(request, "HEAD", requestData);
+        m_reply = m_networkManager->sendCustomRequest(request, "HEAD", requestData);
     else if(method == "OPTIONS")
-        reply = m_networkManager->sendCustomRequest(request, "OPTIONS", requestData);
+        m_reply = m_networkManager->sendCustomRequest(request, "OPTIONS", requestData);
     else if(method == "TRACE")
-        reply = m_networkManager->sendCustomRequest(request, "TRACE", requestData);
+        m_reply = m_networkManager->sendCustomRequest(request, "TRACE", requestData);
     else if(method == "CONNECT")
-        reply = m_networkManager->sendCustomRequest(request, "CONNECT", requestData);
+        m_reply = m_networkManager->sendCustomRequest(request, "CONNECT", requestData);
 
-    QObject::connect(reply, &QNetworkReply::finished, this, &Backend::handleResponse);
+    QObject::connect(m_reply, &QNetworkReply::finished, this, &Backend::handleResponse);
 
     emit this->requestSended();
+}
+
+void Backend::abortRequest()
+{
+    if(m_reply->isRunning())
+        m_reply->abort();
 }
 
 void Backend::handleResponse()
@@ -76,6 +80,12 @@ void Backend::handleResponse()
     if(!reply)
     {
         emit this->responseErrorOccur("", -1, "Response signal sender is a null!");
+        return;
+    }
+
+    if(reply->error() == QNetworkReply::OperationCanceledError)
+    {
+        emit this->abortedRequest();
         return;
     }
 
